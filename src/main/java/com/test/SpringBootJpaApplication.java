@@ -21,6 +21,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -70,40 +72,41 @@ public class SpringBootJpaApplication {
 	}
 
 	@GetMapping("/{visitRequestId}")
-	public List<Visitor> get(@PathVariable long visitRequestId) {
-		return visitRequestRepository.findById(visitRequestId).get().getVisitors();
+	public List<Visitor> getVisitors(@PathVariable long visitRequestId) {
+		Optional<VisitRequest> visitRequestOpt = visitRequestRepository.findById(visitRequestId);
+
+		if (!visitRequestOpt.isPresent()) {
+			throw new RuntimeException(String.format("VisitRequest not found by ID: %d", visitRequestId));
+		}
+
+		return visitRequestOpt.get().getVisitors();
 	}
 
 	@GetMapping("/exchange/{visitRequestId}/{visitorIdToReplace}/{contactIdToExchange}")
-	public ResponseEntity<?> exchange(@PathVariable long visitRequestId, @PathVariable long visitorIdToReplace,
+	public List<Visitor> exchange(@PathVariable long visitRequestId, @PathVariable long visitorIdToReplace,
 	        @PathVariable long contactIdToExchange) {
 
-		try {
-			VisitRequest visitRequest = validateVisitRequest(visitRequestId, visitorIdToReplace);
-			Optional<ContactPerson> contactPersonOpt = contactPersonRepository.findById(contactIdToExchange);
+		VisitRequest visitRequest = validateVisitRequest(visitRequestId, visitorIdToReplace);
+		Optional<ContactPerson> contactPersonOpt = contactPersonRepository.findById(contactIdToExchange);
 
-			if (!contactPersonOpt.isPresent()) {
-				throw new RuntimeException(String.format("Contact person not found by ID: %d", contactIdToExchange));
-			}
-
-			List<Visitor> visitors = visitRequest.getVisitors();
-
-			/*Replace contact with visitor*/
-			IntStream.range(0, visitors.size()).forEach(i -> {
-				if (visitors.get(i).getId() == visitorIdToReplace) {
-					ContactPerson contactPerson = contactPersonOpt.get();
-					contactPerson.setVisitRequest(visitRequest);
-					visitors.set(i, contactPerson);
-				}
-			});
-
-			visitRequestRepository.save(visitRequest);
-		} catch (Exception ex) {
-			return new ResponseEntity<String>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+		if (!contactPersonOpt.isPresent()) {
+			throw new RuntimeException(String.format("Contact person not found by ID: %d", contactIdToExchange));
 		}
 
-		return new ResponseEntity<List<Visitor>>(visitRequestRepository.findById(visitRequestId).get().getVisitors(),
-		        HttpStatus.OK);
+		List<Visitor> visitors = visitRequest.getVisitors();
+
+		/*Replace contact with visitor*/
+		IntStream.range(0, visitors.size()).forEach(i -> {
+			if (visitors.get(i).getId() == visitorIdToReplace) {
+				ContactPerson contactPerson = contactPersonOpt.get();
+				contactPerson.setVisitRequest(visitRequest);
+				visitors.set(i, contactPerson);
+			}
+		});
+
+		visitRequestRepository.save(visitRequest);
+
+		return visitRequestRepository.findById(visitRequestId).get().getVisitors();
 	}
 
 	private VisitRequest validateVisitRequest(long visitRequestId, long visitorIdToReplace) {
