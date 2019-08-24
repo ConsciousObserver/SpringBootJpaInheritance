@@ -1,4 +1,4 @@
-###H2 Web Console to check table data
+## H2 Web Console to check table data
 
 http://localhost:8080/h2
 
@@ -7,13 +7,14 @@ h2 URL: jdbc:h2:mem:dataSource:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;M
 *No password*
 
 
-###REST services
+## REST services
+
 **Get details visitors of an existing request:** http://localhost:8080/{visitRequestId}
 
 **Exchange contact with visitor:** http://localhost:8080/exchange/{visitRequestId}/{visitorIdToReplace}/{contactIdToExchange}
 
 
-###Test run
+## Test run
 
 Some data is created automatically during startup, check H2 web console for details
 
