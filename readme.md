@@ -2,7 +2,7 @@
 
 http://localhost:8080/h2
 
-h2 URL: jdbc:h2:mem:dataSource:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=PostgreSQL
+**h2 URL:** jdbc:h2:mem:dataSource:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=PostgreSQL
 
 *No password*
 
